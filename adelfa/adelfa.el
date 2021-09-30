@@ -65,10 +65,17 @@
 (provide 'adelfa)
 
 (defun adelfa-find-and-forget-cmd (span)
+  "Forgets a single Adelfa command.
+
+   If the command is a comment, we should take no action so as to maintain the
+   correct state in our script. If the command is a theorem, we may undo it by
+   aborting the proof. In the general case, we will simply tell Adelfa to undo.
+   "
   (setq cmd (span-property span 'cmd))
   (cond
     ((eq cmd nil) "") ; comment
-    (t " undo."))
+    ((string-match ".*Theorem.*" cmd) "abort.") ; Theorem start
+    (t "undo."))
   )
 
 (defun adelfa-find-and-forget-fn (span)
