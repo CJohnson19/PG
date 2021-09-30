@@ -23,6 +23,19 @@
      (when (string-match "Proof \\(Completed!\\|Aborted\.\\)" string)
        (proof-clean-buffer proof-goals-buffer))))
 
+(defconst adelfa-error-terms
+  '("Error:.*"
+    "\\(Syntax\\|Typing\\|Unification\\|Unknown\\) error\\."
+    "\\(\\(Cannot apply search to goal formula of this structure\\|Search failed\\)\\.\\)"
+    "Inductive restriction violated"
+    "Unification failure"
+    "Goal formula not existential")
+  "Any error response that Adelfa may return to a command.")
+
+(defconst adelfa-error-terms-regexp
+  (mapconcat 'identity
+             adelfa-error-terms "\\|"))
+
 (proof-easy-config
  'adelfa                                "Adelfa"
  proof-prog-name                        "adelfa"
@@ -39,7 +52,7 @@
  proof-shell-start-goals-regexp         "\\(^.* < \\)"
  proof-shell-end-goals-regexp           ">>>>>"
  proof-shell-restart-cmd                "#reset."
- proof-shell-error-regexp               "Error:.*\\|\\(Syntax\\|Typing\\|Unification\\|Unknown\\) error\.\\|\\(\\(Cannot apply search to goal formula of this structure\\|Search failed\\)\.\\)\\|Inductive restriction violated\\|Unification failure"
+ proof-shell-error-regexp               adelfa-error-terms-regexp
  proof-shell-strip-crs-from-input       nil
  proof-save-command-regexp              proof-no-regexp
  proof-find-and-forget-fn               'adelfa-find-and-forget-fn
