@@ -39,7 +39,7 @@
  proof-shell-start-goals-regexp         "\\(^.* < \\)"
  proof-shell-end-goals-regexp           ">>>>>"
  proof-shell-restart-cmd                "#reset."
- proof-shell-error-regexp               "Error:.*\\|\\(Syntax\\|Typing\\|Unification\\|Unknown\\) error\.\\|\\(\\(Cannot apply search to goal formula of this structure\\|Search failed\\)\.\\)"
+ proof-shell-error-regexp               "Error:.*\\|\\(Syntax\\|Typing\\|Unification\\|Unknown\\) error\.\\|\\(\\(Cannot apply search to goal formula of this structure\\|Search failed\\)\.\\)\\|Inductive restriction violated\\|Unification failure"
  proof-shell-strip-crs-from-input       nil
  proof-save-command-regexp              proof-no-regexp
  proof-find-and-forget-fn               'adelfa-find-and-forget-fn
