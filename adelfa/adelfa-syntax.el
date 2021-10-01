@@ -20,7 +20,7 @@
     ("\\_<\\(/\\\\\\|:=\\|=>\\|\\\\/\\|[,.:;=]\\)\\_>"
      . font-lock-builtin-face)
     ;; forall, exists, true, false, pred, ctx
-    ("\\<\\(exists\\|forall\\|true\\|false\\|ctx\\|pred\\)\\>"
+    ("\\<\\(exists\\|forall\\|true\\|false\\|ctx\\|pred\\|induction\\|case\\|intros\\|apply\\|search\\)\\>"
      . font-lock-keyword-face)
     )
   "Adelfa core language font-lock keywords.")
@@ -35,7 +35,7 @@
     ("\\<\\(\\(?:Co\\)?Define\\)\\>". font-lock-keyword-face)
     ("\\<\\(Theorem\\|Split\\)\\>"
      . font-lock-keyword-face)
-    ("\\<\\(skip\\)\\>"
+    ("\\<\\(skip\\|assert\\)\\>"
      . font-lock-warning-face))
   "Default highlighting for Adelfa major mode.")
 
@@ -45,7 +45,7 @@
 
 (defconst adelfa-goals-font-lock-keywords
   (list
-   (cons "\\<\\(Subgoal\\)\\>" font-lock-keyword-face))
+   (cons "\\<\\(subgoal\\)\\>" font-lock-keyword-face))
   "Adelfa default goal highlight.")
 
 (defconst adelfa-response-font-lock-keywords
