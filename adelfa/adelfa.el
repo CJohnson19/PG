@@ -25,11 +25,13 @@
 
 (defconst adelfa-error-terms
   '("Error:.*"
-    "\\(Syntax\\|Typing\\|Unification\\|Unknown\\) error\\."
-    "\\(\\(Cannot apply search to goal formula of this structure\\|Search failed\\)\\.\\)"
+    "\\(Syntax\\|Typing\\|Unification\\|Unknown\\) error"
+    "\\(Cannot apply search to goal formula of this structure\\|Search failed\\)"
     "Inductive restriction violated"
     "Unification failure"
-    "Goal formula not existential")
+    "Goal formula not existential"
+    "Not enough arguments to apply"
+    "Formula .* not found.*")
   "Any error response that Adelfa may return to a command.")
 
 (defconst adelfa-error-terms-regexp
@@ -51,7 +53,7 @@
  proof-shell-quit-cmd                   "Quit."
  proof-shell-start-goals-regexp         "\\(^.* < \\)"
  proof-shell-end-goals-regexp           ">>>>>"
- proof-shell-restart-cmd                "#reset."
+ proof-shell-restart-cmd                "abort."
  proof-shell-error-regexp               adelfa-error-terms-regexp
  proof-shell-strip-crs-from-input       nil
  proof-save-command-regexp              proof-no-regexp
@@ -60,7 +62,8 @@
  proof-script-font-lock-keywords        adelfa-script-font-lock-keywords
  proof-goals-font-lock-keywords         adelfa-goals-font-lock-keywords
  proof-response-font-lock-keywords      adelfa-response-font-lock-keywords
- proof-shell-handle-output-system-specific adelfa-shell-handle-output)
+ proof-shell-handle-output-system-specific adelfa-shell-handle-output
+ )
 
 (provide 'adelfa)
 
