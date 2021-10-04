@@ -30,7 +30,7 @@
     "Inductive restriction violated"
     "Unification failure"
     "Goal formula not existential"
-    "Not enough arguments to apply"
+    "\\(Not enough\\|Too many\\) arguments to apply"
     "Formula .* not found.*")
   "Any error response that Adelfa may return to a command.")
 
