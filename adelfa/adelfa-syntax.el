@@ -7,51 +7,76 @@
 ;; This file is not part of GNU Emacs.
 ;;
 ;;; Commentary:
+;;  There still needs to be work done on detecting symbols correctly,
+;;  and pruning unnecessary terms from the syntax.
 ;;
-;;  Description
+;;  Description:
+;;  This file provides fontification with the font-lock package for Adelfa.
+;;  All keywords and symbols were gathered from the Adelfa reference guide,
+;;  located at http://sparrow.cs.umn.edu/adelfa/reference-guide.html
 ;;
 ;;; Code:
 (require 'font-lock)
 
 (defconst adelfa-core-font-lock-keywords
   '(
-    ("\\_<\\(=>\\||-\\|[][{}]\\)\\_>"
+    ;; (regexp-opt '("=>" "|-" "[" "]" "{" "}" "/\\" "\\/") 'symbols)
+    ("\\_<\\(/\\\\\\|=>\\|\\\\/\\||-\\|[][{}]\\)\\_>"
      . font-lock-builtin-face)
-    ("\\_<\\(/\\\\\\|:=\\|=>\\|\\\\/\\|[,.:;=]\\)\\_>"
-     . font-lock-builtin-face)
-    ;; forall, exists, true, false, pred, ctx
-    ("\\<\\(exists\\|forall\\|true\\|false\\|ctx\\|pred\\|induction\\|case\\|intros\\|apply\\|search\\)\\>"
+    ;; (regexp-opt '("forall" "ctx" "pred") 'words)
+    ("\\<\\(forall\\|ctx\\|pred\\|exists\\)\\>"
      . font-lock-keyword-face)
+    ;; (regexp-opt '("true" "false") 'words)
+    ("\\<\\(\\(?:fals\\|tru\\)e\\)\\>"
+     . font-lock-constant-face)
     )
   "Adelfa core language font-lock keywords.")
 
 (defconst adelfa-reasoning-font-lock-keywords
   '(
-    ;;
-    ("\\<\\(Query\\|Set\\)\\>" . font-lock-builtin-face)
-    ("\\<\\(Import\\|Specification\\)\\>" . font-lock-builtin-face)
-    ("\\<\\(Type\\|Kind\\|Close\\)\\>"
+    ;; (regexp-opt '("Schema" "Specification") 'words)
+    ("\\<\\(S\\(?:chema\\|pecification\\)\\)\\>"
+     . font-lock-builtin-face)
+    ;; (regexp-opt '("Define") 'words)
+    ("\\<\\(Define\\)\\>"
      . font-lock-keyword-face)
-    ("\\<\\(\\(?:Co\\)?Define\\)\\>". font-lock-keyword-face)
-    ("\\<\\(Theorem\\|Split\\)\\>"
+    ;; (regexp-opt '("Theorem") 'words)
+    ("\\<\\(Theorem\\)\\>"
      . font-lock-keyword-face)
+    ;; (regexp-opt '("search" "intros" "split" "left" "right" "apply" "induction" "exists" "case") 'words)
+    ("\\<\\(apply\\|case\\|exists\\|in\\(?:duction\\|tros\\)\\|left\\|right\\|s\\(?:earch\\|plit\\)\\)\\>"
+     . font-lock-builtin-face)
+    ;; (regexp-opt '("weaken" "strengthen" "ctxpermute" "inst" "prune" "unfold" "applydfn") 'words)
+    ("\\<\\(weaken\\|strengthen\\|ctxpermute\\|inst\\|prune\\|unfold\\|applydfn\\)\\>"
+     . font-lock-builtin-face)
+    ;; (regexp-opt '("skip" "assert") 'words)
     ("\\<\\(skip\\|assert\\)\\>"
-     . font-lock-warning-face))
+     . font-lock-warning-face)
+    )
   "Default highlighting for Adelfa major mode.")
 
 (defconst adelfa-script-font-lock-keywords
-  (append adelfa-core-font-lock-keywords
-          adelfa-reasoning-font-lock-keywords))
+  (append adelfa-reasoning-font-lock-keywords
+          adelfa-core-font-lock-keywords))
 
 (defconst adelfa-goals-font-lock-keywords
   (list
-   (cons "\\<\\(subgoal\\)\\>" font-lock-keyword-face))
+   (cons "\\<\\(Subgoal\\)\\>" font-lock-keyword-face))
   "Adelfa default goal highlight.")
 
-(defconst adelfa-response-font-lock-keywords
-  (list
-   (cons "\\<\\(Proof completed!\\)\\>" font-lock-function-name-face))
+(defconst adelfa-response-keywords
+  '(
+   ;; (regexp-opt '("Vars" "Nominals" "IH") 'words)
+   ("\\<\\(IH\\|\\(?:Nominal\\|Var\\)s\\)\\>" . font-lock-constant-face)
+   ("\\<\\(H[0-9]+\\)\\>" . font-lock-function-name-face)
+   ("\\<\\(Subgoal .*\\)\\>" . font-lock-variable-name-face)
+   ("\\<\\(Proof completed!\\)\\>" . font-lock-function-name-face)
+   )
   "Default highlighting for Adelfa Response mode.")
+
+(defconst adelfa-response-font-lock-keywords
+  (append adelfa-response-keywords
+          adelfa-core-font-lock-keywords))
 
 (defconst adelfa-mode-syntax-table-entries
   (append '(?_ "w")
