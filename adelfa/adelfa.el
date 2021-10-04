@@ -31,6 +31,7 @@
     "Unification failure"
     "Goal formula not existential"
     "\\(Not enough\\|Too many\\) arguments to apply"
+    "Formula not of valid form for induction"
     "Formula .* not found.*")
   "Any error response that Adelfa may return to a command.")
 
