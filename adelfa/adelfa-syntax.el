@@ -70,7 +70,7 @@
    ("\\<\\(IH\\|\\(?:Nominal\\|Var\\)s\\)\\>" . font-lock-constant-face)
    ("\\<\\(H[0-9]+\\)\\>" . font-lock-function-name-face)
    ("\\<\\(Subgoal .*\\)\\>" . font-lock-variable-name-face)
-   ("\\<\\(Proof completed!\\)\\>" . font-lock-function-name-face)
+   ("\\<\\(Proof Completed\\)\\>" . font-lock-function-name-face)
    )
   "Default highlighting for Adelfa Response mode.")
 
