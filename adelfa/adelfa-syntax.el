@@ -59,23 +59,32 @@
   (append adelfa-reasoning-font-lock-keywords
           adelfa-core-font-lock-keywords))
 
-(defconst adelfa-goals-font-lock-keywords
-  (list
-   (cons "\\<\\(Subgoal\\)\\>" font-lock-keyword-face))
+(defconst adelfa-goals-keywords
+  '(
+    ;; (regexp-opt '("Vars" "Nominals" "IH") 'words)
+    ("\\<\\(IH\\|\\(?:Nominal\\|Var\\)s\\)\\>" . font-lock-constant-face)
+    ("\\<\\(H[0-9]+\\)\\>" . font-lock-function-name-face)
+    ("\\<\\(Subgoal .*\\)\\>" . font-lock-variable-name-face)
+    ("\\<\\(Proof Completed\\)\\>" . font-lock-function-name-face)
+    )
   "Adelfa default goal highlight.")
 
 (defconst adelfa-response-keywords
   '(
-   ;; (regexp-opt '("Vars" "Nominals" "IH") 'words)
-   ("\\<\\(IH\\|\\(?:Nominal\\|Var\\)s\\)\\>" . font-lock-constant-face)
-   ("\\<\\(H[0-9]+\\)\\>" . font-lock-function-name-face)
-   ("\\<\\(Subgoal .*\\)\\>" . font-lock-variable-name-face)
-   ("\\<\\(Proof Completed\\)\\>" . font-lock-function-name-face)
-   )
+    ;; (regexp-opt '("Vars" "Nominals" "IH") 'words)
+    ("\\<\\(IH\\|\\(?:Nominal\\|Var\\)s\\)\\>" . font-lock-constant-face)
+    ("\\<\\(H[0-9]+\\)\\>" . font-lock-function-name-face)
+    ("\\<\\(Subgoal .*\\)\\>" . font-lock-variable-name-face)
+    ("\\<\\(Proof Completed\\)\\>" . font-lock-function-name-face)
+    )
   "Default highlighting for Adelfa Response mode.")
 
 (defconst adelfa-response-font-lock-keywords
   (append adelfa-response-keywords
+          adelfa-core-font-lock-keywords))
+
+(defconst adelfa-goals-font-lock-keywords
+  (append adelfa-goals-keywords
           adelfa-core-font-lock-keywords))
 
 (defconst adelfa-mode-syntax-table-entries
