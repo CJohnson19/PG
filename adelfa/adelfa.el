@@ -58,6 +58,7 @@
  proof-shell-error-regexp               adelfa-error-terms-regexp
  proof-shell-strip-crs-from-input       nil
  proof-save-command-regexp              proof-no-regexp
+ proof-non-undoables-regexp             "\\(undo\\|redo\\|abort\\)"
  proof-find-and-forget-fn               'adelfa-find-and-forget-fn
  proof-script-syntax-table-entries      adelfa-mode-syntax-table-entries
  proof-script-font-lock-keywords        adelfa-script-font-lock-keywords
@@ -69,17 +70,16 @@
 (provide 'adelfa)
 
 (defun adelfa-find-and-forget-cmd (span)
-  "Forgets a single Adelfa command.
+  "Forgets a single Adelfa command represented by SPAN.
 
    If the command is a comment, we should take no action so as to maintain the
    correct state in our script. If the command is a theorem, we may undo it by
-   aborting the proof. In the general case, we will simply tell Adelfa to undo.
-   "
+   aborting the proof. In the general case, we will simply tell Adelfa to undo."
   (setq cmd (span-property span 'cmd))
   (cond
-    ((eq cmd nil) "") ; comment
-    ((string-match ".*Theorem.*" cmd) "abort.") ; Theorem start
-    (t "undo."))
+   ((eq cmd nil) "") ; comment
+   ((string-match ".*Theorem.*" cmd) "abort.") ; Theorem start
+   (t "undo."))
   )
 
 (defun adelfa-find-and-forget-fn (span)
@@ -87,8 +87,8 @@
   (while span
     (setq typ (span-property span 'type))
     (if (not (eq typ 'comment))
-      (let ((current-cmd (adelfa-find-and-forget-cmd span)))
-        (setq ans (cons current-cmd ans))))
+        (let ((current-cmd (adelfa-find-and-forget-cmd span)))
+          (setq ans (cons current-cmd ans))))
     (setq span (next-span span 'type)))
   ans)
 ;;; adelfa.el ends here
