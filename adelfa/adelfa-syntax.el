@@ -41,18 +41,15 @@
     ;; (regexp-opt '("Schema" "Specification") 'words)
     ("\\<\\(S\\(?:chema\\|pecification\\)\\)\\>"
      . font-lock-builtin-face)
-    ;; (regexp-opt '("Define") 'words)
-    ("\\<\\(Define\\)\\>"
+    ;; (regexp-opt '("Define" "Theorem" "by") 'words)
+    ("\\<\\(Define\\|Theorem\\|by\\)\\>"
      . font-lock-keyword-face)
-    ;; (regexp-opt '("Theorem") 'words)
-    ("\\<\\(Theorem\\)\\>"
-     . font-lock-keyword-face)
-    ;; (regexp-opt '("search" "intros" "split" "left" "right" "apply" "induction" "exists" "case") 'words)
-    ("\\<\\(apply\\|case\\|exists\\|in\\(?:duction\\|tros\\)\\|left\\|right\\|s\\(?:earch\\|plit\\)\\)\\>"
-     . font-lock-builtin-face)
+    ;; (regexp-opt '("search" "intros" "split" "left" "right" "apply" "induction" "exists" "case" "to" "on" "keep") 'words)
+    ("\\<\\(apply\\|case\\|exists\\|in\\(?:duction\\|tros\\)\\|keep\\|left\\|on\\|right\\|s\\(?:earch\\|plit\\)\\|to\\)\\>"
+     . font-lock-function-name-face)
     ;; (regexp-opt '("weaken" "strengthen" "ctxpermute" "inst" "prune" "unfold" "applydfn") 'words)
     ("\\<\\(weaken\\|strengthen\\|ctxpermute\\|inst\\|prune\\|unfold\\|applydfn\\)\\>"
-     . font-lock-builtin-face)
+     . font-lock-function-name-face)
     ;; (regexp-opt '("skip" "assert") 'words)
     ("\\<\\(skip\\|assert\\)\\>"
      . font-lock-warning-face)
@@ -65,8 +62,8 @@
 
 (defconst adelfa-goals-keywords
   '(
-    ;; (regexp-opt '("Vars" "Nominals" "IH") 'words)
-    ("\\<\\(IH\\|\\(?:Nominal\\|Var\\)s\\)\\>" . font-lock-constant-face)
+    ;; (regexp-opt '("Vars" "Nominals" "IH" "Contexts") 'words)
+    ("\\<\\(Contexts\\|IH\\|\\(?:Nominal\\|Var\\)s\\)\\>" . font-lock-constant-face)
     ("\\<\\(H[0-9]+\\)\\>" . font-lock-function-name-face)
     ("\\<\\(Subgoal .*\\)\\>" . font-lock-variable-name-face)
     ("\\<\\(Proof Completed\\)\\>" . font-lock-function-name-face)
@@ -76,7 +73,7 @@
 (defconst adelfa-response-keywords
   '(
     ;; (regexp-opt '("Vars" "Nominals" "IH") 'words)
-    ("\\<\\(IH\\|\\(?:Nominal\\|Var\\)s\\)\\>" . font-lock-constant-face)
+    ("\\<\\(Contexts\\|IH\\|\\(?:Nominal\\|Var\\)s\\)\\>" . font-lock-constant-face)
     ("\\<\\(H[0-9]+\\)\\>" . font-lock-function-name-face)
     ("\\<\\(Subgoal .*\\)\\>" . font-lock-variable-name-face)
     ("\\<\\(Proof Completed\\)\\>" . font-lock-function-name-face)
