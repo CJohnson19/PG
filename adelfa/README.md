@@ -30,6 +30,10 @@ Here is my configuration for reference:
 (setq proof-splash-enable nil
       proof-output-tooltips nil
       proof-three-window-mode-policy 'horizontal)
+(add-hook 'adelfa-mode-hook
+          #'(lambda ()
+              (setq indent-line-function 'indent-relative)))
+
 (load-file proof-site-file)
 (setq auto-mode-alist
    (append
