@@ -52,8 +52,8 @@
  proof-assistant-home-page              "http://sparrow.cs.umn.edu/adelfa/"
  proof-shell-annotated-prompt-regexp    "^.*>> $"
  proof-shell-quit-cmd                   "Quit."
- proof-shell-start-goals-regexp         "\\(^.* < \\)"
- proof-shell-end-goals-regexp           ">>>>>"
+ proof-shell-start-goals-regexp         "^Subgoal .*[^is]:$"
+ proof-shell-end-goals-regexp           ">>"
  proof-shell-restart-cmd                "abort."
  proof-shell-error-regexp               adelfa-error-terms-regexp
  proof-shell-strip-crs-from-input       nil
