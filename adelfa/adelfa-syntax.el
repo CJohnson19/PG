@@ -10,6 +10,10 @@
 ;;  There still needs to be work done on detecting symbols correctly,
 ;;  and pruning unnecessary terms from the syntax.
 ;;
+;;  Large portions of the code were based off of the Abella Prover's
+;;  implementation of Proof General and the existing Adelfa emacs mode,
+;;  authored by Mary Southern.
+;;
 ;;  Description:
 ;;  This file provides fontification with the font-lock package for Adelfa.
 ;;  All keywords and symbols were gathered from the Adelfa reference guide,
