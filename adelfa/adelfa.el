@@ -30,8 +30,13 @@
     "Inductive restriction violated"
     "Unification failure"
     "Goal formula not existential"
+    "Pruning formulas must.*"
     "\\(Not enough\\|Too many\\) arguments to apply"
     "Formula not of valid form for induction"
+    "No assumption of name.*"
+    "Formula not a disjunction"
+    "Found logic varaible at toplevel."
+    "weakening failed."
     "Formula .* not found.*")
   "Any error response that Adelfa may return to a command.")
 
