@@ -48,7 +48,7 @@
       (coq "Coq" "v" nil (".vo" ".glob"))
       (easycrypt "EasyCrypt" "ec" "\\.eca?\\'")
       (phox "PhoX" "phx" nil (".phi" ".pho"))
-      (adelfa "Adelfa" "\\.ath$")
+      (adelfa "Adelfa" "ath")
 
       ;; Obscure instances or conflict with other Emacs modes.
 
