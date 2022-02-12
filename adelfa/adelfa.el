@@ -37,6 +37,16 @@
     "Formula not a disjunction"
     "Found logic varaible at toplevel."
     "weakening failed."
+    "Given expression is not a type"
+    "Invalid formula for instatiation"
+    "Exactly one instantiation must be provided"
+    ".* is not an instantiable name"
+    "No clauses of definition match"
+    "Formula must be atomic to weaken"
+    "Formula not a conjunction"
+    "Formula not a disjunction"
+    "Later contet items cannot depend on later name"
+    "contexts must use the same context variables"
     "Formula .* not found.*")
   "Any error response that Adelfa may return to a command.")
 
