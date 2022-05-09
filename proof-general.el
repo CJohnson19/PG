@@ -79,6 +79,8 @@
          '("generic" "lib"
            "coq" "easycrypt" "pghaskell" "pgocaml" "pgshell" "phox" "qrhl"
            )))
+           "adelfa" "coq" "easycrypt" "pghaskell" "pgocaml" "pgshell" "phox"
+       ))
     (dolist (dir byte-compile-directories)
       (add-to-list 'load-path (expand-file-name dir pg-init--pg-root)))))
 
