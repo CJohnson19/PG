@@ -12,7 +12,7 @@
 ;; Authors: Thomas Kleymann, Healfdene Goguen, Pierre Courtieu
 ;; Maintainer: Pierre Courtieu <Pierre.Courtieu@cnam.fr>
 
-;; License:     GPL (GNU GENERAL PUBLIC LICENSE)
+;; SPDX-License-Identifier: GPL-3.0-or-later
 
 ;;; Commentary:
 ;;
@@ -477,6 +477,7 @@ so for the following reasons:
     ("Derive Inversion" nil "Derive Inversion @{id} with # Sort #." t "Derive\\s-+Inversion")
     ("Derive Dependent Inversion" nil "Derive Dependent Inversion @{id} with # Sort #." t "Derive\\s-+Dependent\\s-+Inversion")
     ("Derive Inversion_clear" nil "Derive Inversion_clear @{id} with # Sort #." t)
+    ("Derive SuchThat" nil "Derive @[id] SuchThat # As @{id}." t "Derive")
     ("Example" "ex" "Example #:# := #." t "Example");; careful
     ("Equations" "eqs" "Equations #:# := #." t "Equations")
     ("Fixpoint" "fix" "Fixpoint # (#:#) {struct @{arg}} : # :=\n#." t "Fixpoint")
@@ -1207,7 +1208,12 @@ different."
      "using" "with" "beta" "delta" "iota" "zeta" "after" "until"
      "at" "Sort" "Time" "dest" "where"
      ;; SSReflect user reserved.
-     "is" "nosimpl" "of")
+     "is" "nosimpl" "of"
+     ;; Derive reserved
+     "SuchThat" "As" ;; I don't like these two: they start with
+                     ;; capitals but they are not at beginning of a
+                     ;; sentence
+     )
    coq-user-reserved-db)
   "Reserved keywords of Coq.")
 
@@ -1249,6 +1255,9 @@ different."
 (defun coq--regexp-alt-list-symb (args)
   (concat "\\_<\\(?:" (mapconcat #'identity args "\\|") "\\)\\_>"))
 
+(defun coq--regexp-alt-list (args)
+  (concat "\\(?:" (mapconcat #'identity args "\\|") "\\)"))
+
 (defvar coq-keywords-regexp (coq--regexp-alt-list-symb coq-keywords))
 
 
@@ -1281,8 +1290,37 @@ different."
 
 (defvar coq-symbols-regexp (regexp-opt coq-symbols))
 
+;; HACKISH: This string matches standard error regexp UNLESS there is
+;; the standard header of the "Fail" command (which is "The command
+;; blah has indeed failed with message:\n"). The case where the error
+;; header has nothing before it is treated using "empty string at
+;; start" regexp. BUT coq-error-regexp (and hence
+;; proof-shell-error-regexp) must be correct either when searching in
+;; a string or when searching in the proof-shell-buffer when point is
+;; at the start of the last output. Hence when we use \\` (empty
+;; string at start of the string) we should also accept \\= (empty
+;; string at point).
+(defvar coq--prefix-not-regexp "\\(\\(\\`\\|\\=\\)\n?\\)\\|\\(?:\\(?:[^:]\\|[^e]:\\|[^g]e:\\|[^a]ge:\\|[^s]age:\\|[^s]sage:\\|[^e]ssage:\\|[^m]essage:\\)\n\\)"
+  "A regexp matching allowed text before coq error.")
+
+(defvar coq--error-header-re-list
+  '("In nested Ltac call"
+    "Discarding pattern"
+    "Syntax error:"
+    "System Error:"
+    "User Error:"
+    "User error:"
+    "Anomaly[:.]"
+    "Toplevel input"
+    "\\<Error:")
+  "A list of regexps matching coq error headers.")
+
+(defvar coq--raw-error-regexp (coq--regexp-alt-list coq--error-header-re-list))
+
 ;; ----- regular expressions
-(defvar coq-error-regexp "\\(?:[^:]\\|[^e]:\\|[^g]e:\\|[^a]ge:\\|[^s]age:\\|[^s]sage:\\|[^e]ssage:\\|[^m]essage:\\)\n\\(In nested Ltac call\\|Error:\\|Discarding pattern\\|Syntax error:\\|System Error:\\|User Error:\\|User error:\\|Anomaly[:.]\\|Toplevel input[,]\\)"
+;; ignore "Error:" if preceded by \n[ ^]+\n
+(defvar coq-error-regexp
+  (concat "\\(?:" coq--prefix-not-regexp "\\)" coq--raw-error-regexp)
   "A regexp indicating that the Coq process has identified an error.")
 
 ;; april2017: coq-8.7 removes special chars definitely and puts

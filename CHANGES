@@ -2,11 +2,13 @@
 
 This is a summary of main changes.  For details, please see
 the Git ChangeLog, the GitHub repo https://github.com/ProofGeneral/PG
-and the PG Trac http://proofgeneral.inf.ed.ac.uk/trac
 
 * Changes of Proof General 4.5 from Proof General 4.4
 
 ** Generic changes
+*** License changed to GPLv3+
+*** Remove support for the following systems:
+Twelf, CCC, Lego, Hol-Light, ACL2, Plastic, Lambda-Clam, Isabelle, HOL98.
 
 *** require GNU Emacs 25.1 or later
 
@@ -202,6 +204,19 @@ also https://wiki.ubuntu.com/Releases).
     Variable `coq-indent-box-style' only affects indentation after
     quantifiers (used to affect script braces "{").
 
+    Variable `coq-indent-align-with-first-arg` governs between these
+    two indentation behaviours:
+
+    (setq 'coq-indent-align-with-first-arg t) gives
+
+        somefunciton x y
+                     z t u
+                     v
+    (setq 'coq-indent-align-with-first-arg nil) give (default):
+
+        somefunciton x y
+          z t u
+          v
 
 * Changes of Proof General 4.4 from Proof General 4.3
 
@@ -209,8 +224,7 @@ also https://wiki.ubuntu.com/Releases).
 
    https://github.com/ProofGeneral/PG
 
-   Please submit new bugs there, old bugs may stay in good old PG trac
-   for a while though: http://proofgeneral.inf.ed.ac.uk/trac
+   Please submit new bugs there.
 
 ** Coq changes
 

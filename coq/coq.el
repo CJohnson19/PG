@@ -12,7 +12,7 @@
 ;; Authors: Healfdene Goguen, Pierre Courtieu
 ;; Maintainer: Pierre Courtieu <Pierre.Courtieu@cnam.fr>
 
-;; License:     GPL (GNU GENERAL PUBLIC LICENSE)
+;; SPDX-License-Identifier: GPL-3.0-or-later
 
 ;;; Commentary:
 ;;
@@ -2703,12 +2703,11 @@ insertion point for the \"using\" annotation. ")
 
 ;; span is typically the whole theorem statement+proof span built after a save
 ;; command
-(defun coq-highlight-span-dependencies (span _suggested)
-  (goto-char (span-start span))
+(defun coq-highlight-span-dependencies (start end _suggested)
+  (goto-char start)
   ; Search for the "Proof" command and build a hilighted span on it
-  (let* ((endpos (re-search-forward coq-proof-using-regexp))
-         (proof-pos (match-beginning 0))
-         (newspan (span-make proof-pos endpos)))
+  (let* ((proof-pos (match-beginning 0))
+         (newspan (span-make start end)))
     (span-set-property newspan 'face 'proof-warning-face)
     (span-set-property newspan 'help-echo "Right click to insert \"proof using\"")
     (span-set-property newspan 'proofusing t)))
@@ -2727,6 +2726,28 @@ insertion point for the \"using\" annotation. ")
     (coq-insert-proof-using-suggestion span t)
     (span-delete specialspan)))
 
+(defun coq-find-Proof-command (start end)
+  "look for a \"Proof\" command in span SPAN.
+
+Return nil if not found. Set point to the end of \"Proof\"
+otherwise and return position."
+  (goto-char start)
+  (let ((res t) found)
+    (while (and res (null found))
+      (setq res (let ((case-fold-search nil))
+                  (re-search-forward coq-proof-using-regexp end t)))
+      (when res
+        (let ((beg-proof (match-beginning 0))
+              (ins-point (match-beginning 1))
+              (end-cmd (match-end 1)))
+          (if (and res
+                   (save-excursion ;; one more check that it is a Proof command
+                     (goto-char beg-proof)
+                     (equal (point) (coq-find-real-start))))
+              (setq found (list beg-proof ins-point end-cmd))
+            (goto-char end-cmd)))))
+    found))
+
 ;; TODO: have 'ignoe option to completely ignore (not highlight)
 ;; and have 'never renamed into 'highlight
 (defun coq-insert-proof-using-suggestion (span &optional force)
@@ -2736,17 +2757,17 @@ built from the list of strings in SUGGESTED.
 SPAN is the span of the whole theorem (statement + proof)."
   (with-current-buffer proof-script-buffer
     (save-excursion
-      (goto-char (span-start span))
-      (let* ((endpos (re-search-forward coq-proof-using-regexp (span-end span) t)))
-        (when endpos
-          (let* ((suggested (span-property span 'dependencies))
-                 (proof-pos (match-beginning 0))
-                 (insert-point (match-beginning 1))
-                 (previous-string (match-string 1))
+      (let ((lproof-info (coq-find-Proof-command (span-start span) (span-end span))))
+        (when lproof-info
+          (let* ((proof-pos (car lproof-info)) ;(proof-pos (match-beginning 0))
+                 (insert-point (cadr lproof-info)) ;(insert-point (match-beginning 1))
+                 (proof-end (caddr lproof-info))
+                 (previous-string (buffer-substring insert-point proof-end))
                  (previous-content (split-string previous-string))
+                 (suggested (span-property span 'dependencies))
                  (string-suggested (mapconcat #'identity suggested " "))
                  (string-suggested (coq-hack-proofusing-suggestion string-suggested))
-                 ;; disabled for now it never happens because Coq would suggest anything?
+                 ;; disabled for now it never happens because Coq wouldn't suggest anything
                  (same (and nil previous-content
                             (not (cl-set-exclusive-or previous-content suggested
                                                       :test 'string-equal))))
@@ -2759,7 +2780,7 @@ SPAN is the span of the whole theorem (statement + proof)."
               (if (or force (equal coq-accept-proof-using-suggestion 'always) usersayyes)
                   (coq-insert-proof-using proof-pos previous-content insert-point string-suggested)
                 (when (member coq-accept-proof-using-suggestion '(highlight ask))
-                  (coq-highlight-span-dependencies span string-suggested)
+                  (coq-highlight-span-dependencies proof-pos proof-end string-suggested)
                   (message "\"Proof using\" not set. M-x coq-insert-suggested-dependency or right click to add it. See also `coq-accept-proof-using-suggestion'."))))))))))
 
 (defvar coq-dependencies-system-specific
@@ -3021,6 +3042,9 @@ Completion is on a quasi-exhaustive list of Coq tacticals."
 (defvar last-coq-error-location nil
   "Last error from `coq-get-last-error-location' and `coq-highlight-error'.")
 
+(defvar coq--error-location-regexp
+  "^Toplevel input[^:]+:\n> \\(.*\\)\n> \\([^^]*\\)\\(\\^+\\)\n"
+  "A regexp to search the header of coq error locations.")
 
 ;; I don't use proof-shell-last-output here since it is not always set to the
 ;; really last output (specially when a *tactic* gives an error) instead I go
@@ -3049,7 +3073,7 @@ buffer."
     ;; then highlight the corresponding error location
     (proof-with-current-buffer-if-exists proof-response-buffer
       (goto-char (point-max)) ;\nToplevel input, character[^:]:\n
-      (when (re-search-backward "^Toplevel input[^:]+:\n> \\(.*\\)\n> \\([^^]*\\)\\(\\^+\\)\n" nil t)
+      (when (re-search-backward coq--error-location-regexp nil t)
         (let ((text (match-string 1))
               (pos (length (match-string 2)))
               (len (length (match-string 3))))

@@ -11,7 +11,7 @@
 
 ;; Author:      David Aspinall <David.Aspinall@ed.ac.uk>
 
-;; License:     GPL (GNU GENERAL PUBLIC LICENSE)
+;; SPDX-License-Identifier: GPL-3.0-or-later
 
 ;;; Commentary:
 ;;
@@ -44,10 +44,10 @@
     '(
       ;; Main instances of PG.
 
-      (isar "Isabelle" "thy")
       (coq "Coq" "v" nil (".vo" ".glob"))
       (easycrypt "EasyCrypt" "ec" "\\.eca?\\'")
       (phox "PhoX" "phx" nil (".phi" ".pho"))
+      (qrhl "qRHL" "qrhl")
       (adelfa "Adelfa" "ath")
 
       ;; Obscure instances or conflict with other Emacs modes.
@@ -65,11 +65,6 @@
 
       ;; Incomplete/obsolete:
 
-      ;; (hol98	"HOL" "sml")
-      ;; (acl2	"ACL2" "acl2")
-      ;; (twelf	"Twelf" "elf")
-      ;; (plastic "Plastic" "lf")        ; obsolete
-      ;; (lclam "Lambda-CLAM" "lcm")     ; obsolete
       ;; (demoisa "Isabelle Demo" "ML")  ; obsolete
       )
     "Default value for `proof-assistant-table', which see.")
@@ -238,7 +233,7 @@ only select the proof assistants you (or your site) may need.
 You can select which proof assistants you want by setting this
 variable before `proof-site.el' is loaded, or by setting
 the environment variable `PROOFGENERAL_ASSISTANTS' to the
-symbols you want, for example \"lego isa\".  Or you can
+symbols you want, for example \"coq easycrypt\".  Or you can
 edit the file `proof-site.el' itself.
 
 Note: to change proof assistant, you must start a new Emacs session.")

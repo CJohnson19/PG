@@ -13,7 +13,7 @@
 ;;          Stefan Monnier
 ;; Maintainer: Pierre Courtieu <Pierre.Courtieu@cnam.fr>
 
-;; License:     GPLv3+ (GNU GENERAL PUBLIC LICENSE version 3 or later)
+;; SPDX-License-Identifier: GPL-3.0-or-later
 
 ;;; Commentary:
 
@@ -452,6 +452,12 @@ The point should be at the beginning of the command name."
 (defun coq-is-cmdend-token (tok)
   (or (coq-is-bullet-token tok) (coq-is-subproof-token tok) (coq-is-dot-token tok)))
 
+;; Standard synonyms are better here than in the coq-smie-xxxward-token-aux functions.
+(defconst coq-standard-token-synonyms
+  '(
+    ("SuchThat" . ":") ("As" . ":= def") ;; For "Derive foo SuchThat bar As oof".
+    ))
+
 (defun coq-smie-forward-token ()
   (let ((tok (coq-smie-forward-token-aux)))
     (cond
@@ -460,6 +466,9 @@ The point should be at the beginning of the command name."
         (cdr res)))
      ((assoc tok coq-smie-monadic-tokens)
       (let ((res (assoc tok coq-smie-monadic-tokens)))
+        (cdr res)))
+     ((assoc tok coq-standard-token-synonyms)
+      (let ((res (assoc tok coq-standard-token-synonyms)))
         (cdr res)))
      (tok))))
 
@@ -639,6 +648,9 @@ The point should be at the beginning of the command name."
      ((assoc tok coq-smie-monadic-tokens)
       (let ((res (assoc tok coq-smie-monadic-tokens)))
         (cdr res)))
+     ((assoc tok coq-standard-token-synonyms)
+      (let ((res (assoc tok coq-standard-token-synonyms)))
+        (cdr res)))
      (tok))))
 
 (defun coq-smie-backward-token-aux ()
@@ -755,7 +767,7 @@ The point should be at the beginning of the command name."
      ;;         (let ((nxttok (coq-smie-backward-token))) ;; recursive call
      ;;           (coq-is-cmdend-token nxttok))))
      ;;  (forward-char -1)
-     ;;  (if (looking-at "{") "{ subproof" "} subproof")))
+     ;;  (if (looking-at "{") "{ subproof" "} subproof"))
 
      ((and (equal tok ":") (looking-back "\\<\\(constr\\|ltac2?\\|uconstr\\)"
                                          (- (point) 7)))
@@ -920,7 +932,7 @@ The point should be at the beginning of the command name."
      ;; generic "Com start" token, so that everything in the command
      ;; is considered a child of this token. This makes indentation
      ;; never look above the current command start (unless indenting
-     ;; the first line of the command. For now we only apply this to
+     ;; the first line of the command). For now we only apply this to
      ;; things starting with a letter, because the grammar makes use
      ;; of non letters token and this would hide them. Other
      ;; exception: Ltac things like "match" and "let' that need to be
@@ -1142,6 +1154,7 @@ Typical values are 2 or 4."
 	    (exp))
 
       (commands (commands "." commands)
+                ;(commands ". sameline" commands)
 		(commands "- bullet" commands)
 		(commands "+ bullet" commands)
 		(commands "* bullet" commands)
@@ -1171,7 +1184,7 @@ Typical values are 2 or 4."
       (assoc "-- bullet") (assoc "++ bullet") (assoc "** bullet")
       (assoc "--- bullet") (assoc "+++ bullet") (assoc "*** bullet")
       (assoc "---- bullet") (assoc "++++ bullet") (assoc "**** bullet")
-      (left ".")
+      (assoc ".")
       (assoc "with inductive" "with fixpoint" "where"))
     '((nonassoc "Com start") (assoc ":= equations")
       (assoc ":= def" ":= inductive")
@@ -1306,8 +1319,8 @@ If nil, default to `proof-indent' if it exists or to `smie-indent-basic'."
    ((coq-is-bullet-token tk) "after bullet")
    ((member tk '("with" ":" "by" "in tactic" "as" ",")) "tactic infix")
    ((member tk '("<:" "<+" "with module")) "modulespec infix") ;;  ":= inductive" ":= module" and other ":= xxx"
+   ((member tk '(":= record")) tk) ;; avoids capture by next case
    ((string-prefix-p ":= " tk) "after :=")
-   ((member tk '(". proofstart" ". modulestart")) "dot script parent open")
    ;; by default we pass the token name, but maybe it would be safer
    ;; to simply fail, so that we detect missing tokens in this function?
    (t tk)))
@@ -1353,6 +1366,133 @@ If nil, default to `proof-indent' if it exists or to `smie-indent-basic'."
     (coq-smie-search-token-backward '("forall" "quantif exists"))
     (equal (current-column) (current-indentation))))
 
+
+
+(defcustom coq-indent-align-with-first-arg nil
+  "Non-nil if indentation should try to align arguments on the first one.
+With a non-nil value you get
+
+    let x = List.map (fun x -> 5)
+                     my list
+
+whereas with a nil value you get
+
+    let x = List.map (fun x -> 5)
+              my list"
+  :type 'boolean)
+
+;; to be added to smie-indent-functions: this function deals with
+;; arguemtns of functions. Explanation: it is hardcoded in SMIE that a
+;; list of expressions (with no separator) is actually a single
+;; expression. Thus we need an adhoc treatment to deal with the indentation
+;; of arguments if they are not on the same line as the function.
+
+;; Definition foo :=
+;;   foo x y
+;;     z t  (* align with function foo + 2. *)
+;;     u v.  (* align with arg z on bol of previous line *)
+
+;; More complex: 
+;; Definition foo :=
+;;   foo x (y
+;;            a b)
+;;     z t  (* align with function foo + 2. *)
+;;     u v.  (* align with arg z on bol of previous line *)
+
+;; This function examines these case. The generic situation is this:
+;; we want to indent token (tk)
+
+;;
+;;  ... other sexps? ...
+;;     (sexp) (se
+;;     ^ xp) (sexp)
+;;     |    tk
+;;     |    ^
+;;     |  token to indent (tk)
+;;     |
+;;   last skipped token (lstk)
+
+;; The function examines the list of sexps on the left of
+;; (point) until reaching a beginning of line. Then it tries to
+;; determine what the last token skipped (lstk) is:
+
+;; - if none was skipped it means that (tk) is not an argument, so we
+;;   give up and let the regular indentation do the job.
+
+;; - if (lstk) is still an argument of something above, indentation
+;;   should align (tk) with (lstk).
+
+;; - if (lstk) is really a function (no more sexp before it) then we
+;;   should indent from it (+2 in the example above).
+;; Remark: Stefan Monier may make this less adhoc some day.
+(defun coq-smie--args ()
+  ;; PG specifics: some token are like parenthesis in the grammar but
+  ;; are not paren-characters in the syntax table. ". proofstart" and
+  ;; ". module start" mainly. These tokens need a special treatment.
+  ;; We use coq-find-real-start to avoid crossing them
+  (let ((limit (save-excursion (coq-find-real-start))))
+    (unless
+        (or coq-indent-align-with-first-arg
+            (nth 8 (syntax-ppss))
+            (looking-at comment-start-skip)
+            (looking-at "[ \t]*$")                 ; tuareg bug #179
+            ;; the current token is a special token corresponding to
+            ;; an ends of command, but it is not recognized as such in
+            ;; the grammar, and the 2 tests below wrongly succeed:
+            ;; this token cannot be an argument of anything.
+            (member (nth 0 (save-excursion (smie-indent-forward-token)))
+                    '(". proofstart" ". modulestart" "{|" "{|"))
+            (numberp (nth 1 (save-excursion (smie-indent-forward-token))))
+            (numberp (nth 2 (save-excursion (smie-indent-backward-token)))))
+      (save-excursion
+        (let ((positions nil)
+              arg)
+          (while (and (null (car (smie-backward-sexp)))
+                      ;; never go beyond the current command start.
+                      ;; otherwise things like this:
+                      ;; { tac1. }
+                      ;; { tac2. }
+                      ;; would be detected as function applications. 
+                      (>= (point) limit) 
+                      (push (point) positions)
+                      (not (smie-indent--bolp))))
+          (save-excursion
+            ;; Figure out if the atom we just skipped is an argument rather
+            ;; than a function.
+            (setq arg
+                  (let ((left (smie-backward-sexp)))
+                    (or (null (car left))
+                        (funcall smie-rules-function :list-intro
+                                 (funcall smie-backward-token-function))))))
+          (cond
+           ((null positions)
+            ;; We're the first expression of the list.  In that case, the
+            ;; indentation should be (have been) determined by its context.
+            nil)
+           (arg ;; There's a previous element, and it's not special
+                ;; (it's not the function), so let's just align with that one.
+            (goto-char (car positions))
+            (if (fboundp 'smie-indent--current-column)
+                (smie-indent--current-column)
+              (current-column)))
+           (t ;; There's no previous arg at BOL.  Align with the function.
+              ;; TODO: obey boxed style? this was for quantifiers.
+            (goto-char (car positions))
+            ;; Special case: the function we found is actually next to a command start.
+            ;; We prefer to indent from it.
+            (when (not (= (save-excursion (back-to-indentation) (point)) (point)))
+              (let ((left (save-excursion (smie-backward-sexp))))
+                (if (equal (nth 2 left) "Com start")
+                    (goto-char (nth 1 left)))))
+              (+ (smie-indent--offset 'args)
+                 ;; We used to use (smie-indent-virtual), but that
+                 ;; doesn't seem right since it might then indent args less than
+                 ;; the function itself.
+                 (if (fboundp 'smie-indent--current-column)
+                     (smie-indent--current-column)
+                   (current-column))))))))))
+
+
 ;; Reminder: (smie-rule-separator kind) only works for *parenthesized* enumerations.
 ;; and ":= inductive" is not considered a parenthesis so "|" needs special hack
 ;; below. "," for tuples and for tac args cannot be distinguished, so it cannot be
@@ -1368,13 +1508,14 @@ KIND is the situation and TOKEN is the thing w.r.t which the rule applies."
       (pcase (cons kind token)
         (`(,_ . (or "; record")) (smie-rule-separator kind)) ;; see also the "before" rule
         (`(:elem . basic) (or coq-indent-basic (bound-and-true-p proof-indent) 2))
-        (`(:elem . arg) nil)
+        (`(:elem . arg)  (if (smie-rule-prev-p "} subproof") 0 nil)) ;; hack: "{} {}"" not an application
         (`(:close-all . ,_) t)
-        (`(:list-intro . ,_) (member token '("fun" "forall" "quantif exists"
-                                             "with" "Com start")))
+        (`(:list-intro . ,_) (member token '("fun" "forall" "quantif exists" "with"))) ;; "Com start"
         (`(:after . ,_) ;; indent relative to token (parent of token at point).
          (pcase (coq-indent-categorize-token-after token)
            ("} subproof" 0) ;;shouldn't be captured by (:elem . args)?
+           (". proofstart" coq-indent-proofstart)
+           (". modulestart" coq-indent-modulestart)
            ;; decrement indentation when hanging 
            ((and (or "tactic infix" "after :=") (guard (or (hang-p) (smie-rule-bolp)))) 0)
            ((and "->" (guard (hang-p))) 0) ((or ":=" "with inductive") 2)
@@ -1382,7 +1523,7 @@ KIND is the situation and TOKEN is the thing w.r.t which the rule applies."
            ((and "; tactic" (guard (hang-p)) (guard (not (parent-p "Com start")))) 0)
            ("; tactic" 2);; only applies "after" so when ";" is alone at its line
            ((guard (string-match "^[^][:alnum:](){}\[]" token)) 2); guessing infix operator.
-           ;;((guard (and (message "DEFAULTING") nil)) nil)
+           ;;((guard (and (message "################### RULES AFTER:DEFAULTING") nil)) nil)
            ))
         (`(:before . ,_) ; indent token at point itself
          (let* ((cat (coq-indent-categorize-token-before token))
@@ -1409,35 +1550,15 @@ KIND is the situation and TOKEN is the thing w.r.t which the rule applies."
              ;; rather querying its virtual indentation to compute indentation of another
              ;; (child) token. unbox ==> indent relative to parent.
              ;; unboxed indent for "{" not at bol:
-             ((and (or "{ subproof" "[" "{") (guard (not (smie-rule-bolp))))
-              (cond 
-               ((smie-rule-prev-p "} subproof" "]" "}") (parent 0))
-               (t (parent 2))))
-             ;; unboxed indent for quantifiers (if coq-indent-box-style non nil)
-             ((and (or "forall" "quantif exists") (guard (not boxed))
-                   (guard (not (smie-rule-bolp))) )
+             ((and (or "forall" "quantif exists") (guard (and (not (smie-rule-bolp)) (not boxed))))
               (parent coq-smie-after-bolp-indentation))
-             ;;((guard (and (message "DEFAULTING") nil)) nil)
-             )))))))
-
-
-
-;; No need of this hack anymore?
-;;       ((and (equal token "Proof End")
-;;             (parent-p "Module" "Section" "goalcmd"))
-;;        ;; ¡¡Major gross hack!!
-;;        ;; This typically happens when a Lemma had no "Proof" keyword.
-;;        ;; We should ideally find some other way to handle it (e.g. matching Qed
-;;        ;; not with Proof but with any of the keywords like Lemma that can
-;;        ;; start a new proof), but we can workaround the problem here, because
-;;        ;; SMIE happened to decide arbitrarily that Qed will stop before Module
-;;        ;; when parsing backward.
-;;        ;; FIXME: This is fundamentally very wrong, but it seems to work
-;;        ;; OK in practice.
-;;        (parent 2))
-
-
-
+             ((and (or "[" "{") (guard (not (smie-rule-bolp)))) (parent 2))
+             ((guard (and (smie-rule-prev-p "} subproof" "{ subproof" ".") (not (smie-rule-bolp))))
+              (cond
+               ((smie-rule-prev-p "} subproof") (parent))
+               ((smie-rule-prev-p "{ subproof") (coq-smie-backward-token) (+ 2 (smie-indent-virtual)))
+               ((smie-rule-prev-p ".") (smie-backward-sexp 'half) (smie-indent-virtual)))))))))))
+;;((guard (and (message "################### RULES BEFORE: DEFAULTING") nil)) nil)
 
 (provide 'coq-smie)
 ;;; coq-smie.el ends here
